@@ -1,7 +1,7 @@
 class ServerError extends Error {
     constructor(
         statusCode,
-        message = "Something went wrong",
+        message = "Something went wrong.",
         errors = [],
         stack = "",
     ) {
