@@ -3,7 +3,7 @@ class ServerError extends Error {
         statusCode,
         message = "Something went wrong.",
         errors = [],
-        stack = "",
+        stack = ""
     ) {
         super(message);
         this.statusCode = statusCode;

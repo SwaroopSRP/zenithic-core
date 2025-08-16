@@ -15,12 +15,12 @@ app.use(
         origin: process.env.CORS_ORIGIN,
         credentials: true,
         allowedHeaders: ["Content-Type", "Authorization"],
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    }),
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
+    })
 );
 
 app.get("/", (req, res) => {
     res.status(200).send(
-        "Welcome! You are now accessing an instance of Zenithic's core.",
+        "Welcome! You are now accessing an instance of Zenithic's core."
     );
 });
