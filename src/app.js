@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import healthCheckerRouter from "./routes/healthchecker.route.js";
 
 const app = express();
 export default app;
@@ -18,6 +19,8 @@ app.use(
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
     })
 );
+
+app.use("/api/v1/healthcheck", healthCheckerRouter);
 
 app.get("/", (req, res) => {
     res.status(200).send(
