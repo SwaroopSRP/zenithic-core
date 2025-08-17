@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import dbConnect from "./config/db.js";
 import app from "./app.js";
 
 dotenv.config({
@@ -7,13 +8,12 @@ dotenv.config({
 
 const port = process.env.PORT || 6969;
 
-try {
-    app.listen(port, () => {
-        console.log(
-            `Zenithic Core server up and listening on http://localhost:${port}`
-        );
+dbConnect()
+    .then(() => {
+        app.listen(port, () => {
+            console.log(`Server up and running on http://localhost:${port}`);
+        });
+    })
+    .catch((err) => {
+        console.error("DB connection error: ", err);
     });
-} catch (error) {
-    console.warn("Zenithic Core server failed to initialize!");
-    console.error(error);
-}
