@@ -15,13 +15,13 @@ async function sendEmail(options) {
         port: process.env.SMTP_PORT,
         auth: {
             user: process.env.SMTP_UNAME,
-            pass: process.env.SMTP_PASS
+            pass: process.env.SMTP_PASSWD
         }
     });
 
     const email = {
         from: "noreply@zenithic.in",
-        to: "options.email",
+        to: options.email,
         subject: options.subject,
         text: mailGenerator.generatePlaintext(options.emailContent),
         html: mailGenerator.generate(options.emailContent)

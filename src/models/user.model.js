@@ -10,7 +10,6 @@ const userSchema = new Schema({
         trim: true,
         minLength: 4,
         maxLength: 15,
-        trim: true,
         index: true,
         lowercase: true
     },
@@ -25,7 +24,7 @@ const userSchema = new Schema({
     passwd: { type: String, required: [true, "Password is mandatory!"] },
     profileImg: {
         type: { url: String, localPath: String },
-        default: { url: "https://placehold.co/200x200//", localPath: "" }
+        default: { url: "https://placehold.co/200x200/", localPath: "" }
     },
     isActive: { type: Boolean, default: false },
     isEmailVerified: { type: Boolean, default: false },
@@ -44,7 +43,7 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.checkPassword = async function (inputPassword) {
-    return await bcrypt.compare(candidatePassword, this.passwd);
+    return await bcrypt.compare(inputPassword, this.passwd);
 };
 
 userSchema.methods.genAccessToken = function () {
