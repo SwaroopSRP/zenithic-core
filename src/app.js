@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import healthCheckerRouter from "./routes/healthchecker.route.js";
+import authRouter from "./routes/auth.route.js";
 
 const app = express();
 export default app;
@@ -21,6 +22,7 @@ app.use(
 );
 
 app.use("/api/v1/healthcheck", healthCheckerRouter);
+app.use("/api/v1/auth", authRouter);
 
 app.get("/", (req, res) => {
     res.status(200).send(

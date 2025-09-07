@@ -81,3 +81,5 @@ function registerUser() {
             );
     });
 }
+
+export { registerUser };
