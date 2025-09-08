@@ -77,4 +77,41 @@ const registerUser = asyncHandler(async (req, res) => {
         );
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+    const { uname, passwd } = req.body;
+    if (!uname || !passwd) {
+        throw new ServerError(400, "Username and password are required!");
+    }
+
+    const user = await userModel.findOne({ uname });
+    if (!user) {
+        throw new ServerError(401, `User with username ${uname} not found!`);
+    }
+
+    const isPasswdValid = await user.isPasswordCorrect(passwd);
+    if (!isPasswdValid) {
+        throw new ServerError(401, "Invalid password!");
+    }
+
+    const { accessToken, refreshToken } = await genARTokens(user._id);
+
+    const loggedInUser = await userModel
+        .findById(user._id)
+        .select("-passwd -refreshToken -emailVerifToken -emailVerifExpiry");
+
+    const cookieOptions = { httpOnly: true, secure: true };
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(
+            new ServerResponse(
+                200,
+                { user: loggedInUser, accessToken, refreshToken },
+                "User has been successfully logged in."
+            )
+        );
+});
+
+export { registerUser, loginUser };
