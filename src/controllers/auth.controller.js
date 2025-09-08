@@ -88,7 +88,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ServerError(401, `User with username ${uname} not found!`);
     }
 
-    const isPasswdValid = await user.isPasswordCorrect(passwd);
+    const isPasswdValid = await user.checkPassword(passwd);
     if (!isPasswdValid) {
         throw new ServerError(401, "Invalid password!");
     }

@@ -1,6 +1,6 @@
 import { body } from "express-validator";
 
-function applyUserValidations() {
+function applyRegistrationValidations() {
     return [
         body("uname")
             .trim()
@@ -42,4 +42,11 @@ function applyUserValidations() {
     ];
 }
 
-export default applyUserValidations;
+function applyLoginValidations() {
+    return [
+        body("uname").trim().notEmpty().withMessage("Username is required"),
+        body("passwd").trim().notEmpty().withMessage("Password is required")
+    ];
+}
+
+export { applyRegistrationValidations, applyLoginValidations };
