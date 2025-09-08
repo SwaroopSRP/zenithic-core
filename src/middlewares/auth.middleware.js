@@ -4,7 +4,9 @@ import asyncHandler from "../utils/async_handler.js";
 import jwt from "jsonwebtoken";
 
 const verifyAccessToken = asyncHandler(async (req, res, next) => {
-    const token = req.cookies?.accessToken;
+    const token =
+        req.cookies?.accessToken ||
+        req.headers?.authorization?.replace("Bearer ", "");
     if (!token) {
         throw new ServerError(
             401,
@@ -16,7 +18,7 @@ const verifyAccessToken = asyncHandler(async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
         const user = await userModel
-            .findById(decoded?._id)
+            .findById(decoded.id)
             .select("-passwd -refreshToken -emailVerifToken -emailVerifExpiry");
         if (!user) {
             throw new ServerError(401, "Invalid access token!");
