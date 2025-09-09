@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import userModel from "../models/user.model.js";
 import { sendEmail, verifyEmailTemplate } from "../utils/mailing.js";
 import ServerResponse from "../utils/api_response.js";
@@ -42,6 +43,7 @@ const registerUser = asyncHandler(async (req, res) => {
         uname,
         isEmailVerified: false
     });
+
     const { rawToken, hashedToken, tokenExpiry } = user.genTempToken();
     user.emailVerifToken = hashedToken;
     user.emailVerifExpiry = tokenExpiry;
@@ -130,4 +132,149 @@ const logoutUser = asyncHandler(async (req, res) => {
         .json(new ServerResponse(200, null, "User successfully logged out."));
 });
 
-export { registerUser, loginUser, logoutUser };
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(
+            new ServerResponse(200, { user: req.user }, "Fetched current user.")
+        );
+});
+
+const verifyEmail = asyncHandler(async (req, res) => {
+    const { verifToken } = req.params;
+    if (!verifToken) {
+        throw new ServerError(400, "Email verification token is missing!");
+    }
+
+    let hashedToken = crypto
+        .createHash("sha256")
+        .update(verifToken)
+        .digest("hex");
+
+    const user = await userModel.findOne({
+        emailVerifToken: hashedToken,
+        emailVerifExpiry: { $gt: Date.now() }
+    });
+    if (!user) {
+        throw new ServerError(
+            400,
+            "Invalid or expired email verification token!"
+        );
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerifToken = undefined;
+    user.emailVerifExpiry = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new ServerResponse(
+                200,
+                { isEmailVerified: true },
+                "Email successfully verified."
+            )
+        );
+});
+
+const resendVerificationEmail = asyncHandler(async (req, res) => {
+    const user = await userModel.findById(req.user?.id);
+    if (!user) {
+        throw new ServerError(404, "User does not exist!");
+    }
+
+    if (user.isEmailVerified) {
+        throw new ServerError(409, "Email is already verified!");
+    }
+
+    const { rawToken, hashedToken, tokenExpiry } = user.genTempToken();
+    user.emailVerifToken = hashedToken;
+    user.emailVerifExpiry = tokenExpiry;
+    await user.save({ validateBeforeSave: false });
+
+    await sendEmail({
+        email: user?.email,
+        subject: "Verification of your email required",
+        emailContent: verifyEmailTemplate(
+            user.uname,
+            `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${rawToken}`
+        )
+    });
+
+    return res
+        .status(200)
+        .json(
+            new ServerResponse(
+                200,
+                null,
+                "Verification email resent successfully."
+            )
+        );
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken =
+        req.cookies?.refreshToken || req.body?.refreshToken;
+    if (!incomingRefreshToken) {
+        throw new ServerError(
+            401,
+            "Unauthorized access! Refresh token is missing."
+        );
+    }
+
+    try {
+        const decoded = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+
+        const user = await userModel.findById(decoded?.id);
+        if (!user) {
+            throw new ServerError(401, "Unauthorized access! User not found.");
+        }
+
+        if (incomingRefreshToken !== user?.refreshToken) {
+            throw new ServerError(
+                401,
+                "Unauthorized access! Refresh token mismatch, or refresh token has expired."
+            );
+        }
+
+        const { accessToken, refreshToken: newRefreshToken } =
+            await genARTokens(user.id);
+
+        user.refreshAccessToken = newRefreshToken;
+        await user.save({ validateBeforeSave: false });
+
+        const cookieOptions = { httpOnly: true, secure: true };
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, cookieOptions)
+            .cookie("refreshToken", newRefreshToken, cookieOptions)
+            .json(
+                new ServerResponse(
+                    200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    "Access token have been refreshed."
+                )
+            );
+    } catch (error) {
+        console.error(error);
+        throw new ServerError(
+            401,
+            "Unauthorized access! Invalid or expired refresh token."
+        );
+    }
+});
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    getCurrentUser,
+    verifyEmail,
+    resendVerificationEmail,
+    refreshAccessToken
+};
