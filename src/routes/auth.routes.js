@@ -3,13 +3,13 @@ import {
     registerUser,
     loginUser,
     logoutUser
-} from "../controllers/auth.controller.js";
-import verifyAccessToken from "../middlewares/auth.middleware.js";
+} from "../controllers/auth.controllers.js";
+import verifyAccessToken from "../middlewares/auth.middlewares.js";
 import {
     applyRegistrationValidations,
     applyLoginValidations
 } from "../validations/index.js";
-import validate from "../middlewares/validator.middleware.js";
+import validate from "../middlewares/validator.middlewares.js";
 
 const authRouter = Router();
 
