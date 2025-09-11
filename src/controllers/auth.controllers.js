@@ -288,14 +288,18 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
         subject: "Password reset request",
         mailgenContent: forgotPasswordTemplate(
             user.uname,
-            `${process.env.FORGOT_PASSWORD_REDIRECT_URL}/${unHashedToken}`,
+            `${process.env.FORGOT_PASSWORD_REDIRECT_URL}/${unHashedToken}`
         )
     });
 
     return res
         .status(200)
         .json(
-            new ServerResponse(200, null, "Password reset mail has been sent on your mail id")
+            new ServerResponse(
+                200,
+                null,
+                "Password reset mail has been sent on your mail id"
+            )
         );
 });
 
@@ -310,7 +314,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 
     const user = await userModel.findOne({
         forgotPasswdToken: hashedToken,
-        forgotPasswdExpiry: { $gt: Date.now() },
+        forgotPasswdExpiry: { $gt: Date.now() }
     });
     if (!user) {
         throw new ServerError(489, "Token is invalid or expired");
